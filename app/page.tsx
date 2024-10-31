@@ -12,6 +12,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { authApi } from '@/lib/auth-api'
 
 type Product = {
   id: number
@@ -32,12 +33,11 @@ export default function ShopEZ() {
   const [isCreatingAccount, setIsCreatingAccount] = useState(false)
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
 
-  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [fullName, setFullName] = useState('')
+  const [customerName, setCustomerName] = useState('')
   const [email, setEmail] = useState('')
-  const [phoneNumber, setPhoneNumber] = useState('')
-  const [streetAddress, setStreetAddress] = useState('')
+  const [phoneNo, setPhoneNo] = useState('')
+  const [street, setStreet] = useState('')
   const [city, setCity] = useState('')
   const [state, setState] = useState('')
   const [zipcode, setZipcode] = useState('')
@@ -51,18 +51,47 @@ export default function ShopEZ() {
   const totalItems = cart.length
   const totalPrice = cart.reduce((sum, item) => sum + item.price, 0)
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoggedIn(true) // Real app: validate credentials
+    try {
+      const response = await authApi.login(email, password)
+      localStorage.setItem('token', response.token)
+      setIsLoggedIn(true)
+    } catch (error) {
+      console.error('Login failed:', error)
+      //add error handling UI here
+    }
   }
 
-  const handleCreateAccount = (e: React.FormEvent) => {
-    e.preventDefault()
-    console.log('Account created:', {
-      fullName, username, email, phoneNumber, streetAddress, city, state, zipcode, country
-    })
-    setIsLoggedIn(true)
-  }
+  const handleCreateAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const userData = {
+        email,
+        password,
+        customerName,
+        phoneNo,
+        street,
+        city,
+        state,
+        zipcode,
+        country
+      };
+      
+      // Register the user
+      const response = await authApi.register(userData);
+      
+      // If registration successful, login
+      const loginResponse = await authApi.login(email, password);
+      localStorage.setItem('token', loginResponse.token);
+      setIsLoggedIn(true);
+      
+      console.log('Registration and login successful');
+    } catch (error) {
+      console.error('Registration failed:', error);
+      // Add error handling UI here
+    }
+  };
 
   const handleCheckout = () => setIsCheckoutOpen(true)
 
@@ -84,12 +113,11 @@ export default function ShopEZ() {
             {isCreatingAccount ? (
               <form onSubmit={handleCreateAccount} className="space-y-4">
                 {/** Account creation form fields */}
-                <InputField label="Full Name" value={fullName} onChange={setFullName} required />
-                <InputField label="Username" value={username} onChange={setUsername} required />
+                <InputField label="Full Name" value={customerName} onChange={setCustomerName} required />
                 <InputField label="Password" type="password" value={password} onChange={setPassword} required />
                 <InputField label="Email" type="email" value={email} onChange={setEmail} required />
-                <InputField label="Phone Number" value={phoneNumber} onChange={setPhoneNumber} required />
-                <InputField label="Street Address" value={streetAddress} onChange={setStreetAddress} required />
+                <InputField label="Phone Number" value={phoneNo} onChange={setPhoneNo} required />
+                <InputField label="Street Address" value={street} onChange={setStreet} required />
                 <InputField label="City" value={city} onChange={setCity} required />
                 <InputField label="State" value={state} onChange={setState} required />
                 <InputField label="Zipcode" value={zipcode} onChange={setZipcode} required />
@@ -99,7 +127,7 @@ export default function ShopEZ() {
             ) : (
               <form onSubmit={handleLogin} className="space-y-4">
                 {/** Login form fields */}
-                <InputField label="Username" value={username} onChange={setUsername} required />
+                <InputField label="Email" type="email" value={email} onChange={setEmail} required />
                 <InputField label="Password" type="password" value={password} onChange={setPassword} required />
                 <Button type="submit" className="w-full">Login</Button>
               </form>
@@ -129,7 +157,7 @@ export default function ShopEZ() {
           <CardTitle className="text-3xl font-bold text-center">ShopEZ</CardTitle>
         </CardHeader>
       </Card>
-      <Header username={username} totalItems={totalItems} handleCheckout={handleCheckout} cart={cart} removeFromCart={removeFromCart} />
+      <Header email={email} totalItems={totalItems} handleCheckout={handleCheckout} cart={cart} removeFromCart={removeFromCart} />
       <ProductGrid products={products} addToCart={addToCart} />
     </div>
   )
@@ -144,10 +172,10 @@ function InputField({ label, type = "text", value, onChange, required = false }:
   )
 }
 
-function Header({ username, totalItems, handleCheckout, cart, removeFromCart }: any) {
+function Header({ email, totalItems, handleCheckout, cart, removeFromCart }: any) {
   return (
     <div className="flex justify-between items-center mb-4">
-      <h1 className="text-2xl font-bold">Welcome, {username}!</h1>
+      <h1 className="text-2xl font-bold">Welcome, {email}!</h1>
       <Popover>
         <PopoverTrigger asChild>
           <Button variant="outline" className="relative">

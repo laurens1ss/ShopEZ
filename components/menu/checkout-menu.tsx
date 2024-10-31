@@ -27,7 +27,6 @@ export function CheckoutMenu({ cart, totalPrice, onClose }: CheckoutMenuProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // Here you would typically process the payment and order
     console.log('Order submitted:', { name, email, address, creditCard, cart, totalPrice })
     setOrderPlaced(true)
   }

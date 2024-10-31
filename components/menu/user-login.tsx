@@ -5,39 +5,51 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
+import { authApi } from '@/lib/auth-api'
 
 export default function UserLogin() {
   const [isLogin, setIsLogin] = useState(true)
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
-  const [phoneNumber, setPhoneNumber] = useState('')
-  const [streetAddress, setStreetAddress] = useState('')
+  const [password, setPassword] = useState('')
+  const [customerName, setCustomerName] = useState('')
+  const [phoneNo, setPhoneNo] = useState('')
+  const [street, setStreet] = useState('')
   const [city, setCity] = useState('')
   const [state, setState] = useState('')
   const [zipcode, setZipcode] = useState('')
   const [country, setCountry] = useState('')
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (isLogin) {
-      console.log('Login with:', { username, password })
-      // Handle login logic here
+      try {
+        const response = await authApi.login(email, password);
+        localStorage.setItem('token', response.token);
+        console.log('Login successful:', response);
+      } catch (error) {
+        console.error('Login failed:', error);
+      }
     } else {
-      console.log('Create account with:', {
-        fullName,
-        username,
-        password,
-        email,
-        phoneNumber,
-        streetAddress,
-        city,
-        state,
-        zipcode,
-        country
-      })
-      // Handle account creation logic here
+      try {
+        const userData = {
+          email,
+          password,
+          customerName,
+          phoneNo,
+          street,
+          city,
+          state,
+          zipcode,
+          country
+        };
+        const response = await authApi.register(userData);
+        // Automatically log in after successful registration
+        const loginResponse = await authApi.login(email, password);
+        localStorage.setItem('token', loginResponse.token);
+        console.log('Registration and login successful');
+      } catch (error) {
+        console.error('Registration failed:', error);
+      }
     }
   }
 
@@ -60,19 +72,20 @@ export default function UserLogin() {
               <div className="space-y-2">
                 <Label htmlFor="fullName">Full Name</Label>
                 <Input
-                  id="fullName"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
+                  id="customerName"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
                   required
                 />
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
@@ -89,30 +102,20 @@ export default function UserLogin() {
             {!isLogin && (
               <>
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
                   <Label htmlFor="phoneNumber">Phone Number</Label>
                   <Input
                     id="phoneNumber"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    value={phoneNo}
+                    onChange={(e) => setPhoneNo(e.target.value)}
                     required
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="streetAddress">Street Address</Label>
                   <Input
-                    id="streetAddress"
-                    value={streetAddress}
-                    onChange={(e) => setStreetAddress(e.target.value)}
+                    id="street"
+                    value={street}
+                    onChange={(e) => setStreet(e.target.value)}
                     required
                   />
                 </div>
