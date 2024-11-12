@@ -25,12 +25,46 @@ export function CheckoutMenu({ cart, totalPrice, onClose }: CheckoutMenuProps) {
   const [creditCard, setCreditCard] = useState('')
   const [orderPlaced, setOrderPlaced] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    console.log('Order submitted:', { name, email, address, creditCard, cart, totalPrice })
-    setOrderPlaced(true)
-  }
+    const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
+    const userId = 123; // Replace with actual user ID
+    const trackingId = Math.floor(Math.random() * 1000000); // Example tracking ID
+    const amount = totalPrice;
+    const amountTax = totalPrice * 0.08; // Example tax calculation
+
+    const orderData = {
+      userId,
+      trackingId,
+      amount,
+      amountTax
+    };
+
+    try {
+      const response = await fetch('http://localhost:8080/api/transactions/create-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}` // Include token if needed
+        },
+        body: JSON.stringify(orderData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        console.log('Order created successfully:', data);
+        setOrderPlaced(true);
+      } else {
+        console.error('Order creation failed:', data.message);
+      }
+    } catch (error) {
+      console.error('Error creating order:', error);
+    }
+  };
   if (orderPlaced) {
     return (
       <OrderSummary
